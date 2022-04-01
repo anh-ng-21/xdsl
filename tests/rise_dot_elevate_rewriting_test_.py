@@ -8,7 +8,9 @@ from xdsl.printer import Printer
 from xdsl.dialects.std import *
 from xdsl.dialects.std import Return as stdReturn
 from xdsl.dialects.arith import *
-from xdsl.dialects.rise import *
+from xdsl.dialects.rise.rise import *
+from xdsl.dialects.rise.riseBuilder import RiseBuilder
+from xdsl.elevate import *
 
 
 def test_rise_rewriting_fuse_dot():
@@ -105,12 +107,12 @@ def test_rise_rewriting_fuse_dot():
         return f
 
     @dataclass
-    class FuseReduceMap(RewritePattern):
+    class FuseReduceMap(Strategy):
         rise: Rise
         rise_dsl: RiseBuilder
 
         # def match_and_rewrite(self, op: Operation) -> RewriteResult[List[Operation] ~ Program]:
-        def match_and_rewrite(self, op: Operation, rewriter: PatternRewriter):
+        def impl(self, op: Operation) -> RewriteResult:
             if isinstance(applyReduce := op, Apply) and isinstance(
                     reduceFun := applyReduce.fun.op,
                     Reduce) and (reduceLambda := applyReduce.args[0].op) and (
@@ -121,22 +123,21 @@ def test_rise_rewriting_fuse_dot():
                                 Map) and (mapLambda :=
                                           applyMap.args[0].op) and (
                                               mapInput := applyMap.args[1].op):
-                #TODO: return this
 
-                result = rise_dsl.reduce(
-                    initializer, mapInput, [mapFun.s, reduceFun.t],
-                    lambda tuple, acc: [
-                        mapped := rise_dsl.apply(mapLambda, tuple),
-                        result := rise_dsl.apply(reduceLambda, mapped, acc),
-                        rise_dsl._return(result),
-                    ])
-
-                rewriter.replace_matched_op(result)
-
-                #TODO: garbage collect
-                rewriter.erase_op(reduceFun)
-                rewriter.erase_op(applyMap)
-                rewriter.erase_op(mapFun)
+                return success(
+                    rise_dsl.reduce(
+                        initializer, mapInput, [mapFun.s, reduceFun.t],
+                        lambda tuple, acc: [
+                            mapped := rise_dsl.apply(mapLambda, tuple),
+                            result := rise_dsl.apply(reduceLambda, mapped, acc
+                                                     ),
+                            rise_dsl._return(result),
+                        ]))
+                # calls to rewriter not needed anymore
+                # rewriter.replace_matched_op(result)
+                # rewriter.erase_op(reduceFun)
+                # rewriter.erase_op(applyMap)
+                # rewriter.erase_op(mapFun)
 
     @dataclass
     class BetaReduction(RewritePattern):
