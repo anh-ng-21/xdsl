@@ -121,8 +121,8 @@ class FloorDiviSI(Operation):
 
     @staticmethod
     def get(operand1: Union[Operation, SSAValue],
-            operand2: Union[Operation, SSAValue]) -> FloordiviSigned:
-        return FloordiviSigned.build(operands=[operand1, operand2],
+            operand2: Union[Operation, SSAValue]) -> FloorDiviSI:
+        return FloorDiviSI.build(operands=[operand1, operand2],
                                      result_types=[IntegerType.from_width(32)])
 
 
@@ -140,8 +140,8 @@ class RemSI(Operation):
 
     @staticmethod
     def get(operand1: Union[Operation, SSAValue],
-            operand2: Union[Operation, SSAValue]) -> RemiSigned:
-        return RemiSigned.build(operands=[operand1, operand2],
+            operand2: Union[Operation, SSAValue]) -> RemSI:
+        return RemSI.build(operands=[operand1, operand2],
                                 result_types=[IntegerType.from_width(32)])
 
 
